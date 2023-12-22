@@ -1,12 +1,19 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:movie_app_flutter/utils/custombutton.dart';
 import 'package:movie_app_flutter/utils/custompopup.dart';
 import 'package:movie_app_flutter/utils/description_textfield.dart';
 import 'package:movie_app_flutter/utils/textfield.dart';
+
+import '../blocs/post_bloc/post_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,18 +35,19 @@ class _HomePageState extends State<HomePage> {
   TextEditingController immediateCauseController = TextEditingController();
   TextEditingController underlyingCauseController = TextEditingController();
   TimeOfDay? time = const TimeOfDay(hour: 12, minute: 12);
-  departmentList? selecteddepartment;
+ 
   @override
   void initState() {
     timeinput.text = "";
     super.initState();
   }
-TextEditingController _incidentTypeController=TextEditingController();
-TextEditingController _severityRateController=TextEditingController();
-TextEditingController _potentialRateController=TextEditingController();
- String? _incidentSelectedValue;
- String? _severitySelectedValue;
- String? _potentialSelectedValue;
+
+  TextEditingController _incidentTypeController = TextEditingController();
+  TextEditingController _severityRateController = TextEditingController();
+  TextEditingController _potentialRateController = TextEditingController();
+  String? _incidentSelectedValue;
+  String? _severitySelectedValue;
+  String? _potentialSelectedValue;
 
   Uint8List? _image;
   File? selectedIMage;
@@ -65,19 +73,10 @@ TextEditingController _potentialRateController=TextEditingController();
     'Likely',
     'Almost Certain'
   ];
- 
+
   @override
   Widget build(BuildContext context) {
-    final List<DropdownMenuEntry<departmentList>> departmentEntries =
-        <DropdownMenuEntry<departmentList>>[];
-    for (final departmentList department in departmentList.values) {
-      departmentEntries.add(
-        DropdownMenuEntry<departmentList>(
-          value: department,
-          label: department.label,
-        ),
-      );
-    }
+   
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -199,10 +198,10 @@ TextEditingController _potentialRateController=TextEditingController();
                     .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
                     .toList(),
                 onChanged: (v) {
-                   setState(() {
-          _incidentSelectedValue = v;
-          _incidentTypeController.text = v!;
-        });
+                  setState(() {
+                    _incidentSelectedValue = v;
+                    _incidentTypeController.text = v!;
+                  });
                 },
                 decoration: InputDecoration(
                     hintText: "(demo)",
@@ -234,8 +233,8 @@ TextEditingController _potentialRateController=TextEditingController();
                     .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
                     .toList(),
                 onChanged: (v) {
-                  _severitySelectedValue=v;
-                  _severityRateController.text=v!;
+                  _severitySelectedValue = v;
+                  _severityRateController.text = v!;
                 },
                 decoration: InputDecoration(
                     hintText: "(demo)",
@@ -267,8 +266,8 @@ TextEditingController _potentialRateController=TextEditingController();
                     .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
                     .toList(),
                 onChanged: (v) {
-                  _potentialSelectedValue=v;
-                  _potentialRateController.text=v!;
+                  _potentialSelectedValue = v;
+                  _potentialRateController.text = v!;
                 },
                 decoration: InputDecoration(
                     hintText: "(demo)",
@@ -336,34 +335,7 @@ TextEditingController _potentialRateController=TextEditingController();
               const SizedBox(
                 height: 15,
               ),
-              TextFormField(
-                decoration: InputDecoration(
-                  enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white)),
-                  border: const OutlineInputBorder(
-                      // borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          style: BorderStyle.solid,
-                          color: Color.fromARGB(255, 227, 231, 236))),
-                  suffixIcon: DropdownMenu<departmentList>(
-                    width: 330,
-                    //controller: departmentController,
-                    label: const Text(
-                      "Incident type",
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: Color.fromARGB(255, 156, 164, 171)),
-                    ),
-                    dropdownMenuEntries: departmentEntries,
-                    onSelected: (departmentList? department) {
-                      setState(() {
-                        selecteddepartment = department;
-                      });
-                    },
-                  ),
-                ),
-              ),
+             
               const SizedBox(
                 height: 15,
               ),
@@ -477,7 +449,65 @@ TextEditingController _potentialRateController=TextEditingController();
               const SizedBox(
                 height: 20,
               ),
-              custombotton('Submit', () {}, MediaQuery.of(context).size.width),
+              BlocProvider(
+                  create: (context) => PostBloc(),
+                  child: custombotton('Submit', () async {
+                    Map<String, dynamic> body = {
+                      "iTransId": 0,
+                      "Project": 1,
+                      "Location": locationController.text,
+                      "Date": dateInputController.text,
+                      "Time": timeinput.text,
+                      "IncidentType": 1,
+                      "Severity_Rate": 1,
+                      "Potential_Rate": 1,
+                      "Others": "oth1",
+                      "IncidentDescription": descriptionController.text,
+                      "DamageDescription": descDamageController.text,
+                      "No_Injured_Person": injuriesController.text,
+                      "DetailsOfPersons": "",
+                      "ImmediateCauses": "imm1",
+                      "UnderlyingCauses": "undcau",
+                      "UserId": 1,
+                      "Images": "",
+                    };
+
+                    try {
+                      var url = Uri.parse(
+                          'http://103.120.178.195/Sang.Ray.Mob.Api/Ray/PostIncident');
+                      var headers = {
+                        'Content-Type': 'multipart/form-data',
+                      };
+
+                      var request = http.MultipartRequest("POST", url);
+                      request.headers.addAll(headers);
+
+                      if (selectedIMage?.path.isNotEmpty ?? false) {
+                        http.MultipartFile multipartFile =
+                            await http.MultipartFile.fromPath(
+                                "name", selectedIMage?.path ?? "");
+                        request.files.add(multipartFile);
+                      }
+                      request.fields["body"] = jsonEncode(body);
+
+                      var response =
+                          await http.Response.fromStream(await request.send());
+
+                      log(response.body.toString());
+                      log(response.statusCode.toString());
+
+                      if (response.statusCode == 200) {
+                      } else {
+                        final errorMessage = response.body;
+
+                        //  emit(CreateFailure(error: errorMessage));
+                      }
+                    } catch (error) {
+                      log('Error: $error');
+
+                      //emit(CreateFailure(error: error.toString()));
+                    }
+                  }, MediaQuery.of(context).size.width)),
             ],
           ),
         ),
@@ -497,36 +527,3 @@ TextEditingController _potentialRateController=TextEditingController();
   }
 }
 
-enum departmentList {
-  BALLB("department", "Near Miss"),
-  MCA(
-    "department",
-    "First Aid Case",
-  ),
-  LLM("department", "Restricted Work"),
-  MBA(
-    "department",
-    "Medically Treated",
-  ),
-  LIFESCIENCE("department", "Lost Time Injury"),
-  MOLICULAR(
-    "department",
-    "Fatality",
-  ),
-  MA(
-    "department",
-    "Occupational Illness",
-  ),
-  MAE(
-    "department",
-    "Asset Damage",
-  ),
-  MAA(
-    "department",
-    "Environmental Damage",
-  );
-
-  const departmentList(this.department, this.label);
-  final String department;
-  final String label;
-}
