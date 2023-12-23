@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,7 +11,6 @@ import 'package:movie_app_flutter/utils/custombutton.dart';
 import 'package:movie_app_flutter/utils/custompopup.dart';
 import 'package:movie_app_flutter/utils/description_textfield.dart';
 import 'package:movie_app_flutter/utils/textfield.dart';
-
 import '../blocs/post_bloc/post_bloc.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,6 +21,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List data = [];
+  int _value = 1;
+
+  getData() async {
+    final res = await http.get(
+        Uri.parse('http://103.120.178.195/Sang.Ray.Mob.Api/Ray/GetProject'));
+    //data = jsonDecode(res.body);
+    Map<String, dynamic> data = jsonDecode(res.body);
+    //print(data);
+
+    setState(() {});
+  }
+
   TextEditingController dateInputController = TextEditingController();
   final TextEditingController _txtTimeController = TextEditingController();
   final TextEditingController departmentController = TextEditingController();
@@ -35,7 +46,7 @@ class _HomePageState extends State<HomePage> {
   TextEditingController immediateCauseController = TextEditingController();
   TextEditingController underlyingCauseController = TextEditingController();
   TimeOfDay? time = const TimeOfDay(hour: 12, minute: 12);
- 
+
   @override
   void initState() {
     timeinput.text = "";
@@ -76,7 +87,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-   
+    getData();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -99,8 +110,43 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(
                 height: 5,
               ),
-              textfieledCustom(
-                  'Project', projectController, TextInputType.emailAddress),
+              Center(
+                child: DropdownButtonFormField(
+                    items: data.map((e) {
+                      return DropdownMenuItem(
+                        child: Text(e['sName']),
+                        value: e['iId'],
+                      );
+                    }).toList(),
+                    value: _value,
+                    onChanged: (v) {
+                      _value = v as int;
+                      setState(() {});
+                    },
+                     decoration: InputDecoration(
+                   // hintText: "(demo)",
+                    labelText: "Project",
+                    labelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color.fromARGB(255, 138, 138, 138)),
+                    border: InputBorder.none,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 162, 163, 164),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 162, 163, 164),
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    )),
+                    ),
+              ),
+              // textfieledCustom(
+              //     'Project', projectController, TextInputType.emailAddress),
               const SizedBox(
                 height: 10,
               ),
@@ -335,7 +381,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(
                 height: 15,
               ),
-             
+
               const SizedBox(
                 height: 15,
               ),
@@ -526,4 +572,3 @@ class _HomePageState extends State<HomePage> {
     //  Navigator.of(context).pop(); //close the model sheet
   }
 }
-
