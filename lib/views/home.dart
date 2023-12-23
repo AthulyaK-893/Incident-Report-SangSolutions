@@ -28,10 +28,12 @@ class _HomePageState extends State<HomePage> {
     final res = await http.get(
         Uri.parse('http://103.120.178.195/Sang.Ray.Mob.Api/Ray/GetProject'));
     //data = jsonDecode(res.body);
-    Map<String, dynamic> data = jsonDecode(res.body);
+    Map<String, dynamic> resp = jsonDecode(res.body);
     //print(data);
 
-    setState(() {});
+    setState(() {
+      data=jsonDecode(resp['ResultData']);
+    });
   }
 
   TextEditingController dateInputController = TextEditingController();
@@ -51,6 +53,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     timeinput.text = "";
     super.initState();
+    getData();
   }
 
   TextEditingController _incidentTypeController = TextEditingController();
